@@ -1,6 +1,6 @@
 ---
 name: orchestrated-worktree-delivery
-description: Use when work from a plan or backlog is being delivered by dispatched implementers in worktrees — each item gets a ticket, a branch, a PR, and an adversarial peer review before a merge that only the user performs. Covers the review gate, the round cap, the ticket filed before dispatch, and the git mechanics the protect-git hook requires inside a worktree. Not for edits you make yourself, and not keyed to how many items there are.
+description: Use when work from a plan or backlog is being delivered by dispatched implementers in worktrees, on any repo — each item gets a ticket, a branch, a PR, and an adversarial peer review before a merge that only the user performs. Covers the review gate, the round cap, the ticket filed before dispatch, resolving the repo's tracker and integration branch, and the git mechanics the protect-git hook requires inside a worktree. Not for edits you make yourself, and not keyed to how many items there are.
 ---
 
 # Orchestrated worktree delivery
@@ -73,19 +73,15 @@ Also:
   before any merge is signalled as safe.
 
 ## Reviewer resolution
-Two steps, in order:
+**Dispatch `pr-peer-review`.** It resolves whose standards apply — the repo's own review skill
+when it has one, checks derived from the repo's written norms when it does not — and carries the
+scale, the comment format and the posting mechanics.
 
-1. `.claude/skills/peer-review/` exists in the repo → **use it.**
-2. Otherwise → `pr-peer-review`, which resolves the checks from that repo's own written norms
-   and carries the scale, the comment format and the posting mechanics.
-
-The convention this encodes: **a repo's review standards live in that repo.** There is
-deliberately no intermediate "look for a global skill named after the repo" step — it
-would make the lookup depend on a naming convention someone has to remember, and it would
-legitimise keeping repo-specific checks outside the repo they describe, where they go
-stale in silence. Running this cycle on a repo whose review skill still sits in
-`~/.claude/skills/` means moving that skill into its repo first — today that is
-`idanalyzer-peer-review`, which must move into IDAnalyzer before the cycle runs there.
+The convention that makes one step enough: **a repo's review standards live in that repo.** This
+cycle deliberately does not look them up itself. A second resolution step here would be a second
+place to keep in sync, and it would legitimise keeping repo-specific checks outside the repo they
+describe, where they go stale in silence. A repo whose review skill still sits in
+`~/.claude/skills/` means moving that skill into its repo first.
 
 ## Ticket hook
 The invariant, on any repo:
@@ -98,18 +94,24 @@ The invariant, on any repo:
 - Dependencies and status are set in the same pass.
 - **One item maps to one PR**, and the PR's URL goes on the item at step 4.
 
-In TaxReturnAnalyzer, the coordinates are Monday board `18425100702`: product work maps to
-its existing `U-04-1040-XX` item; everything else — infrastructure, tooling, docs — gets a
-new `OPS-NN · <title>` item in *Operations and Quality* (`group_mm5xd2s3`). `Depends On`
-and `Status` are the columns; `Pull Request` is a link column holding a single URL, which
-is where the one-item-one-PR rule comes from. MCP tools: `create_items`,
-`change_item_column_values`. On another repo, keep the invariant and use that repo's
-tracker.
+**Resolving the tracker.** Read it from the repo's own written norms, in order: `CLAUDE.md`
+(root and nested) → `.claude/` → `docs/`. What you need before dispatching: which board or
+project, which item type the work maps to, the status and dependency fields, and the field
+the PR URL goes in. Those coordinates belong in the repo that uses them — a board id written
+here goes stale the moment someone moves it, and nothing in that repo's PRs ever touches this
+file.
+
+**No tracker.** Say so once, then run the cycle with the PR as the item of record: its body
+carries what the ticket would have, and the review heading carries the branch instead of a
+ticket — which is what `pr-peer-review` already does on a repo without that convention. Do not
+invent a tracker, and do not skip the step silently: an unfiled item on a repo that *does* have
+one is the failure this hook exists to prevent.
 
 ## Git mechanics inside a worktree
 `~/.claude/hooks/protect-git.sh` resolves the current branch from the **session's** cwd,
-not from where the git command runs. With the main checkout on `develop` and the work in
-a worktree on `feature/*`, the hook reads `develop` and blocks a legitimate commit.
+not from where the git command runs. With the main checkout on the integration branch and
+the work in a worktree on `feature/*`, the hook reads the integration branch and blocks a
+legitimate commit.
 
 **The clean exit is `git -C <absolute worktree path>` on every call.** It lets the hook
 resolve the real branch and approve the commit on merit. Put this in the implementer's
@@ -120,19 +122,26 @@ brief — it is the most common way a dispatch stalls.
 override in a brief, and treat a subagent that reached for it as a report to correct.
 
 The hook also blocks `git reset --hard`. To bring a branch up to date after something
-else merged into `develop`, use `gh pr update-branch <n>` then `git pull --ff-only` — no
+else merged into the base, use `gh pr update-branch <n>` then `git pull --ff-only` — no
 forbidden command, no force-push.
 
 ## Closeout
-On merge, move the ticket to `Done` in the same batch as the local cleanup. These commands
+On merge, move the ticket to `Done` where there is one, in the same batch as the local cleanup.
+These commands
 are the orchestrator's own — per the role boundary, local branch hygiene lands in no diff:
 
 ```bash
-git switch develop && git pull --ff-only
-git branch -D <merged-branch>   # -D, not -d: squash merges do not register as merged
+git switch <the PR's base>      # gh pr view <n> --json baseRefName -q .baseRefName
+git pull --ff-only
+git branch -d <merged-branch>
 git fetch origin --prune
 ```
 
-`-D` is not carelessness. The repo squash-merges, so git never sees the branch's commits
-on `develop` and `-d` refuses to delete it. Dead local branches accumulate and invite
-branching from a stale base.
+The base comes from the PR rather than a branch name written here: this cycle runs on repos
+that integrate into `main` and repos that integrate into something else, and the PR already
+carries which one.
+
+`-d` is the default, and it verifies the branch really merged before deleting it. Where the
+repo squash-merges, git never sees the branch's commits on the base and `-d` refuses — use
+`-D` there, and only there. Dead local branches accumulate and invite branching from a stale
+base.
