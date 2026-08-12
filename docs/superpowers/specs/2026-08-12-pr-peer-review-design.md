@@ -1,7 +1,8 @@
 # Design — `pr-peer-review`, a repo-agnostic peer-review skill
 
 **Date:** 2026-08-12
-**Status:** approved (design), pending implementation plan
+**Status:** approved (design); implemented, then amended by the review of PR #1 — the three
+amendments are marked **[amended after review]** where they land
 **Deliverables:** a new private repo `arturoortizvn/gusskills` holding the skills,
 `pr-peer-review/SKILL.md` (new) inside it, and a minimal edit to
 `orchestrated-worktree-delivery/SKILL.md` (moved into the same repo). Both stay reachable at
@@ -50,6 +51,12 @@ symlink into the clone. That is the layout the machine already uses for the insf
 (`~/.claude/skills/insforge -> ../../.agents/skills/insforge`), so skill resolution is known
 to work through a symlink.
 
+**[amended after review]** One consequence of the symlink layout was missed at design time and
+belongs here next to the decision that causes it: because the links resolve into a working tree,
+a PR *on this repo* must be reviewed from a second clone. `gh pr checkout` in the linked clone
+rewrites the live skills under the reviewer, and a branch left checked out leaves the machine
+running unmerged code. The README carries the operative instruction.
+
 Two skills move: `pr-peer-review` (born there) and `orchestrated-worktree-delivery` (moved,
 then edited). Deliberately staying put:
 
@@ -81,9 +88,12 @@ that check belongs in the repo's own skill.
 
 ### 1. Standards resolution (procedure step 1)
 
-1. The repo has a review skill of its own → **invoke it and grade with its checks.** This
-   skill then contributes only what that one lacks (`gh` mechanics, discipline) and never
-   competes with it. What counts: any skill under the repo's `.claude/skills/` whose name or
+1. The repo has a review skill of its own → **grade with its checks.**
+   **[amended after review]** Invoke it where the session can: a repo-local skill only reaches
+   the skills listing when the session's cwd is that repo, so from anywhere else, read the file
+   and follow it. This skill then contributes only what that one lacks (`gh` mechanics,
+   discipline) and never competes with it. What counts: any skill under the repo's
+   `.claude/skills/` whose name or
    description is about reviewing pull requests **on that repo** — `peer-review` is the
    convention, but the test is the description, not the directory name. A skill about
    reviewing your own work before opening a PR (`graph-review`, `code-review`) does not count
@@ -210,6 +220,9 @@ _None._
 ### Could not verify
 - <check> — <why it could not be run>
 
+### Not applicable
+- <check> — <why it cannot apply to this repo>
+
 ### ✅ What looks good
 - <1–3 specific things>
 
@@ -222,9 +235,13 @@ the PR body names none — which is also the 🟡 of universal check 8.
 
 Rules: all four severity headers always present, `_None._` under the empty ones, so a reader
 can tell "no blockers" from "blockers not considered". Every finding cites `file:line`.
-`Checked and cleared` ("I ran it and there was nothing") and `Could not verify` ("I could not
-run it") are not interchangeable, and no check is left out of both. Verdict: any 🔴 → Request
-changes; 🟠 without 🔴 → Comment, with the decision spelled out in the summary; only 🟡/🔵 or
+**[amended after review]** The three dispositions are not interchangeable and no check is left
+out of all three: `Checked and cleared` ("I ran it and there was nothing"), `Could not verify`
+("I could not run it"), `Not applicable` ("it cannot apply here" — a docs-only repo has no test
+suite, no env vars and no request path, so universal checks 3, 5 and 7 land there rather than
+being stretched into either of the others). Drop a heading only when nothing landed under it.
+Verdict: any 🔴 → Request changes; 🟠 without 🔴 → Comment, with the decision spelled out in the
+summary; only 🟡/🔵 or
 none → Approve. A pure-formatting diff gets only `Auto-formatting only — no review needed.`
 and stops.
 

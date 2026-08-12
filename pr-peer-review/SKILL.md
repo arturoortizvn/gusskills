@@ -23,10 +23,12 @@ skill — not in this file.
 
 Step 1 of the procedure, and it decides everything after it.
 
-1. **The repo has a review skill of its own → invoke it and grade with its checks.** This
-   skill then contributes only what that one lacks (the `gh` mechanics, the discipline) and
-   never competes with it. What counts: any skill under the repo's `.claude/skills/` whose name
-   or description is about reviewing pull requests **on that repo** — `peer-review` is the
+1. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
+   session can — a repo-local skill only reaches the skills listing when the session's cwd is
+   that repo, so from anywhere else, read the file and follow it. This skill then contributes
+   only what that one lacks (the `gh` mechanics, the discipline) and never competes with it.
+   What counts: any skill under the repo's `.claude/skills/` whose name or description is about
+   reviewing pull requests **on that repo** — `peer-review` is the
    convention, but the test is the description, not the directory name. A skill about reviewing
    your own work before opening a PR (`graph-review`, `code-review`) does not count and does
    not satisfy this step.
@@ -124,10 +126,10 @@ Scope: GitHub PRs via `gh`. No GitHub remote or no PR → say so and refer to
    gh pr comment <n> --repo $R --body-file <file>
    ```
 
-   Identity: work repos → the work account; personal repos → the personal one. On a mismatch,
-   **stop and ask for the switch** (`gh auth switch`); never post from the wrong account. No
-   issues, no email, no Slack. **Never edit or re-post over a previous comment** — a second
-   round is a second comment, so the argument stays readable.
+   Identity per `~/.claude/personal-projects.md`: work repos → the work account; personal repos
+   → the personal one. On a mismatch, **stop and ask for the switch** (`gh auth switch`); never
+   post from the wrong account. No issues, no email, no Slack. **Never edit or re-post over a
+   previous comment** — a second round is a second comment, so the argument stays readable.
 
 5. **Offer the repo-local skill** — only when checks were derived because the repo had none. One
    line at the end, **in the chat, not in the PR comment**. It is an offer, not a requirement; if
@@ -158,6 +160,9 @@ _None._
 ### Could not verify
 - <check> — <why it could not be run>
 
+### Not applicable
+- <check> — <why it cannot apply to this repo>
+
 ### ✅ What looks good
 - <1–3 specific things>
 
@@ -171,8 +176,11 @@ the PR body names none — which is also the 🟡 of universal check 8.
 All four severity headers are always present, `_None._` under the empty ones, so a reader can
 tell "no blockers" from "blockers not considered". Every finding cites `file:line`.
 
-*Checked and cleared* ("I ran it and there was nothing") and *Could not verify* ("I could not
-run it") are not interchangeable, and no check is left out of both.
+The three dispositions are not interchangeable, and no check is left out of all three:
+*Checked and cleared* is "I ran it and there was nothing", *Could not verify* is "I could not
+run it", and *Not applicable* is "it cannot apply here" — a docs-only repo has no test suite, no
+env vars and no request path, so universal checks 3, 5 and 7 belong in the third, not stretched
+into either of the first two. Drop a heading only when nothing landed under it.
 
 **Verdict logic:**
 

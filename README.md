@@ -19,6 +19,11 @@ The relative form is deliberate: `~/.claude/skills/../../` resolves to `~/`, and
 same shape the insforge skills already use, which is how we know skill resolution follows a
 symlink.
 
+**Review this repo's PRs from a second clone.** Because the symlinks resolve into this working
+tree, `gh pr checkout` here rewrites the live skills: the reviewer's own governing instructions
+change mid-review, and a branch left checked out leaves the machine running unmerged code. Clone
+it again somewhere else and check the PR out there.
+
 ## Adding a skill
 
 1. `mkdir <name>` here and write `<name>/SKILL.md` with `name` and `description` frontmatter.

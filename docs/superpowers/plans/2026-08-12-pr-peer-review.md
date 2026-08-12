@@ -1,5 +1,9 @@
 # `pr-peer-review` Implementation Plan
 
+> **Status:** executed. All five tasks ran and shipped in PR #1; the unchecked boxes below are
+> the plan **as approved**, kept verbatim as the design record rather than maintained as a
+> progress tracker. Read them as the plan, not as work outstanding.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Version the personal skills in a private repo and add `pr-peer-review`, a
