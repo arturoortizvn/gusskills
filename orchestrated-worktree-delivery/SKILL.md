@@ -76,8 +76,8 @@ Also:
 Two steps, in order:
 
 1. `.claude/skills/peer-review/` exists in the repo → **use it.**
-2. Otherwise → `superpowers:requesting-code-review`, with the fallback scale and format
-   below.
+2. Otherwise → `pr-peer-review`, which resolves the checks from that repo's own written norms
+   and carries the scale, the comment format and the posting mechanics.
 
 The convention this encodes: **a repo's review standards live in that repo.** There is
 deliberately no intermediate "look for a global skill named after the repo" step — it
@@ -86,24 +86,6 @@ legitimise keeping repo-specific checks outside the repo they describe, where th
 stale in silence. Running this cycle on a repo whose review skill still sits in
 `~/.claude/skills/` means moving that skill into its repo first — today that is
 `idanalyzer-peer-review`, which must move into IDAnalyzer before the cycle runs there.
-
-### Fallback severity scale and format
-Used only when the repo has no `peer-review` skill of its own. This duplicates ~20 lines
-against a repo's own `peer-review` skill on purpose: without it, the review step cannot run
-at all on a repo that has not written its standards yet.
-
-- 🔴 **Blocker** — must fix before merge. Breaks a published contract, leaks secrets or
-  PII, makes the test suite non-hermetic, or contradicts an approved spec.
-- 🟠 **Major** — fix before merge unless explicitly waived. Architecture deviations, new
-  logic with no tests, unquantified new cost in the request path.
-- 🟡 **Minor** — fix here or open a follow-up. Code smells, naming, dead branches.
-- 🔵 **Nit** — optional polish. Style, formatting, micro-optimisations.
-
-**Exactly one** PR comment (`gh pr comment <n> --body-file <file>`), never edited and
-never re-posted over. All four severity headers always present, `_None._` under the empty
-ones. Every finding cites `file:line`. Checks that could not be run go under a "Could not
-verify" heading instead of being guessed. Verdict: any 🔴 → Request changes; only 🟡/🔵 →
-Approve; 🟠 without 🔴 → Comment, with the decision to be made spelled out in the summary.
 
 ## Ticket hook
 The invariant, on any repo:
