@@ -326,7 +326,7 @@ Expected: the frontmatter prints through the symlink.
 
 ```bash
 F=/Users/arturoortiz/Proyectos/Personales/gusskills/pr-peer-review/SKILL.md
-grep -c '^## ' $F                                    # expect 8 section headings
+grep -n '^## ' $F                                    # expect 9 hits: 8 sections + 1 inside the fence
 grep -n 'name: pr-peer-review' $F                    # frontmatter name matches the directory
 grep -nE '(server_py|app|client|shared|infra)/' $F || echo "no repo paths: OK"
 grep -nE 'Blockers|Major|Minor|Nits' $F | head -8    # all four severities present
@@ -334,9 +334,11 @@ grep -n 'Checked and cleared' $F && grep -n 'Could not verify' $F
 grep -n 'gh pr comment' $F
 ```
 
-Expected: 8 headings; the name line present; `no repo paths: OK`; all four severity words; both
-result sections; the posting command. A hit on the repo-path grep is a failure to fix, not a
-finding to note — that property is the whole reason this skill may live outside a repo.
+Expected: **9** heading hits — the 8 real sections plus the `## Peer review — …` line inside the
+fenced output template, which `grep` counts because it cannot see fences. The name line present;
+`no repo paths: OK`; all four severity words; both result sections; the posting command. A hit on
+the repo-path grep is a failure to fix, not a finding to note — that property is the whole reason
+this skill may live outside a repo.
 
 - [ ] **Step 5: Commit**
 
