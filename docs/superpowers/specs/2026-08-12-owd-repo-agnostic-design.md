@@ -90,14 +90,19 @@ in. Those coordinates belong in the repo that uses them — a board id written h
 moment someone moves it, and nothing in that repo's PRs ever touches this file.
 
 **No tracker.** Say so once, then run the cycle with the PR as the item of record: its body
-carries what the ticket would have, and `no ticket` goes in the review heading — which is what
-`pr-peer-review` already does on a repo without that convention. Do not invent a tracker, and do
-not skip the step silently: an unfiled item on a repo that *does* have one is the failure this
-hook exists to prevent.
+carries what the ticket would have, and the review heading carries the branch instead of a ticket
+— which is what `pr-peer-review` already does on a repo without that convention. Do not invent a
+tracker, and do not skip the step silently: an unfiled item on a repo that *does* have one is the
+failure this hook exists to prevent.
 ```
 
 The no-tracker branch is new, and it is not hypothetical: this repo has no tracker, so the cycle
 cannot run here at all without it.
+
+**[corrected in review]** An earlier draft of that paragraph said `no ticket` goes in the review
+heading. It does not: `pr-peer-review` puts the branch in the heading when the repo has no ticket
+convention, and reserves the literal `no ticket` for a repo that has the convention but a PR that
+names none. The wording above is the corrected one.
 
 ### 3. Closeout — base from the PR, `-d` by default
 

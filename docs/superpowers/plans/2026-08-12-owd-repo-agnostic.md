@@ -155,10 +155,10 @@ here goes stale the moment someone moves it, and nothing in that repo's PRs ever
 file.
 
 **No tracker.** Say so once, then run the cycle with the PR as the item of record: its body
-carries what the ticket would have, and `no ticket` goes in the review heading — which is what
-`pr-peer-review` already does on a repo without that convention. Do not invent a tracker, and
-do not skip the step silently: an unfiled item on a repo that *does* have one is the failure
-this hook exists to prevent.
+carries what the ticket would have, and the review heading carries the branch instead of a
+ticket — which is what `pr-peer-review` already does on a repo without that convention. Do not
+invent a tracker, and do not skip the step silently: an unfiled item on a repo that *does* have
+one is the failure this hook exists to prevent.
 ```
 
 - [ ] **Step 5: Replace the two `develop` sentences in `## Git mechanics inside a worktree`, and all of `## Closeout`**
@@ -221,7 +221,7 @@ grep -nE '\bdevelop\b' $F || echo "no develop branch: OK"
 grep -n 'pr-peer-review' $F                    # expect exactly 2 — see below
 grep -nE 'Blockers|Majors' $F                  # expect 2 — the gate steps, load-bearing
 grep -n 'three rounds maximum' $F              # the round cap survived
-grep -n 'no ticket' $F                          # the no-tracker branch landed
+grep -n '^\*\*No tracker\.\*\*' $F             # the no-tracker branch landed — see below
 grep -n 'name: orchestrated-worktree-delivery' $F
 sed -n '/^## Ticket hook/,/^## Git mechanics/p' $F | grep -c '^- '   # expect 3
 ```
@@ -230,6 +230,13 @@ sed -n '/^## Ticket hook/,/^## Git mechanics/p' $F | grep -c '^- '   # expect 3
 `superpowers:subagent-driven-development` contains the substring, so a bare grep returns a hit and
 reports a failure that does not exist. On the file as it stands the bare form gives 6 hits and the
 bounded form gives 5 — the 5 branch mentions to remove, and the 1 legitimate word to keep.
+
+**Do not grep for `no ticket` as evidence the no-tracker branch landed.** An earlier draft of this
+plan did, because an earlier draft of the paragraph contained that string. The review of PR #2
+established that the string is wrong there — `pr-peer-review` puts the *branch* in the heading when
+the repo has no ticket convention, and reserves `no ticket` for a repo that has the convention but a
+PR naming none — so the corrected paragraph does not contain it, and the old criterion now fails on
+the correct file. Grep the heading instead.
 
 **Two `pr-peer-review` hits is the pass, not one.** The file today has exactly one, in the old step
 2. The rewrite produces two: the dispatch line in *Reviewer resolution*, and the sentence in the
@@ -354,6 +361,11 @@ rewrite exists to serve. None was available while writing it, so it is declared 
 EOF
 )"
 ```
+
+**Executed with `--body-file` instead.** The nested heredoc above needs backticks escaped, and an
+escaping slip corrupts the PR body silently. The run wrote this body to a file and passed
+`--body-file`, same content, no escaping. Prefer that; the block above is kept as the record of what
+was planned.
 
 - [ ] **Step 4: Report and stop**
 

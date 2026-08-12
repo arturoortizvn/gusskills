@@ -102,10 +102,10 @@ here goes stale the moment someone moves it, and nothing in that repo's PRs ever
 file.
 
 **No tracker.** Say so once, then run the cycle with the PR as the item of record: its body
-carries what the ticket would have, and `no ticket` goes in the review heading — which is what
-`pr-peer-review` already does on a repo without that convention. Do not invent a tracker, and
-do not skip the step silently: an unfiled item on a repo that *does* have one is the failure
-this hook exists to prevent.
+carries what the ticket would have, and the review heading carries the branch instead of a
+ticket — which is what `pr-peer-review` already does on a repo without that convention. Do not
+invent a tracker, and do not skip the step silently: an unfiled item on a repo that *does* have
+one is the failure this hook exists to prevent.
 
 ## Git mechanics inside a worktree
 `~/.claude/hooks/protect-git.sh` resolves the current branch from the **session's** cwd,
@@ -126,7 +126,8 @@ else merged into the base, use `gh pr update-branch <n>` then `git pull --ff-onl
 forbidden command, no force-push.
 
 ## Closeout
-On merge, move the ticket to `Done` in the same batch as the local cleanup. These commands
+On merge, move the ticket to `Done` where there is one, in the same batch as the local cleanup.
+These commands
 are the orchestrator's own — per the role boundary, local branch hygiene lands in no diff:
 
 ```bash
