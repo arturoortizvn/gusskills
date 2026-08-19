@@ -25,8 +25,7 @@ changes.
 The convention that makes one step enough: **a repo's review standards live in that repo.**
 This cycle deliberately does not look them up itself. A second resolution step here would be a
 second place to keep in sync, and it would legitimise keeping repo-specific checks outside the
-repo they describe, where they go stale in silence. A repo whose review skill still sits in
-`~/.claude/skills/` means moving that skill into its repo first.
+repo they describe, where they go stale in silence.
 
 The posting rule has the same root. `pr-peer-review` already forbids editing a previous
 comment; what this cycle adds is that no round is exempt from posting at all, because the PR is

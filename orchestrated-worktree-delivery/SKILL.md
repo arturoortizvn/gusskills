@@ -25,10 +25,10 @@ Worktree creation belongs to `superpowers:using-git-worktrees`.
 governs; where this cycle is silent, the invoked skill governs.**
 
 ## Role boundary
-**The orchestrator does not touch the repo.** Every change is dispatched, including doc corrections
-and one-off cleanups: no change is small enough to do yourself. The boundary is the repo's
-*content* — anything that lands in a diff. Local branch hygiene in your own checkout produces no
-diff (see *Closeout*) and is not dispatched.
+**The orchestrator does not touch the repo.** Every change is dispatched, including doc
+corrections, one-off cleanups and deleting an orphaned directory: no change is small enough to do
+yourself. The boundary is the repo's *content* — anything that lands in a diff. Local branch
+hygiene in your own checkout produces no diff (see *Closeout*) and is not dispatched.
 
 What stays with the orchestrator — not an exhaustive list, and a rule stated anywhere in this file
 binds whether or not it appears here:
@@ -44,7 +44,7 @@ binds whether or not it appears here:
 ## The cycle
 1. **Where the repo has a tracker, file the ticket** (see *Ticket hook*) — before anything is
    dispatched.
-2. **Dispatch an implementer**: one item, one branch, one worktree
+2. **Dispatch an implementer** with a precise scope brief: one item, one branch, one worktree
    (`superpowers:using-git-worktrees`).
 3. **The implementer reports and waits.** It does not push, does not open a PR, does not merge.
 4. **The orchestrator dispatches the task review** of that report —
@@ -62,9 +62,10 @@ binds whether or not it appears here:
    findings → technical response → verdict — into a joint report, never with each other.
 8. **Re-dispatch the implementer with the open findings.** Rounds 2 and 3 reuse the same branch,
    worktree and PR — never a second PR for one item — and **each round's commits reach the PR
-   before the reviewer is re-dispatched**. *How* a fix round runs is the invoked skill's business;
-   **how many is this cycle's: three PR review rounds maximum**. Round 3 runs; when its review
-   still returns Blockers or Majors, escalate both positions to the user and stop.
+   before the reviewer is re-dispatched**, by the same capped delegation as step 5. *How* a fix
+   round runs is the invoked skill's business; **how many is this cycle's:
+   three PR review rounds maximum**. Round 3 runs; when its review still returns Blockers or
+   Majors, escalate both positions to the user and stop.
 
 Also:
 - **Report each item as it clears review**, never batched.
@@ -73,7 +74,8 @@ Also:
 
 ## Reviewer resolution
 **Dispatch `pr-peer-review`.** It resolves whose standards apply and carries the scale, the comment
-format and the posting mechanics.
+format and the posting mechanics. **A repo's review standards live in that repo**: one whose review
+skill still sits in `~/.claude/skills/` means moving that skill into its repo first.
 
 **Every round posts its own comment on the PR — always, and never over an existing one**, including
 a round that clears with no findings. An existing comment is never edited or replaced.
@@ -88,9 +90,13 @@ orchestrator, removed once the comment is posted. Do not delegate it:
 `fatal: a branch named '<branch>' already exists`. **Not the orchestrator's checkout**: `gh pr
 checkout` there fails while the implementer's worktree holds the branch —
 `fatal: '<branch>' is already used by worktree at '<path>'`. **Not the implementer's**: the fix
-round reuses it. **The comment body is written outside the worktree, under `$TMPDIR`** — a body
-file left inside makes the removal refuse
-(`contains modified or untracked files`), and `--force` is not an option this cycle allows.
+round reuses it.
+
+**Brief the reviewer that the tree is already at the head and no checkout is needed** — otherwise
+`pr-peer-review` runs `gh pr checkout <n>`, which inside the review worktree hits the `fatal:`
+above. **The comment body is written outside the worktree, under `$TMPDIR`** — a body file left
+inside makes the removal refuse (`contains modified or untracked files`), and `--force` is not an
+option this cycle allows.
 
 ## Ticket hook
 - **The item is filed in whatever tracker that repo uses, before the implementer is dispatched, and
@@ -109,17 +115,19 @@ what the ticket would have. Do not invent a tracker, and do not skip the step si
 
 ## Integration branch
 Every branch is cut from it and every PR targets it, so it is resolved **before the first
-dispatch**, from the repo's written norms, in the tracker's order. Where none of them names it, ask
-the user. **Never infer it from the forge's default branch.** Once the PR exists the base is read
-from it (`gh pr view <n> --json baseRefName`), which is what *Closeout* does.
+dispatch**, from the repo's written norms, in the same order *Ticket hook* uses. Where none of them
+names it, ask the user. **Never infer it from the forge's default branch.** Once the PR exists the
+base is read from it (`gh pr view <n> --json baseRefName`), which is what *Closeout* does.
 
 ## Git mechanics inside a worktree
 `~/.claude/hooks/protect-git.sh` resolves the current branch from the **session's** cwd, not from
 where the git command runs, so it blocks a legitimate commit made in a worktree.
 
 **The clean exit is `git -C <absolute worktree path>`, one git command per shell call** — the hook
-grades the **last** `-C` in the string. Never chain git commands that span two checkouts. Put this
-in the implementer's brief.
+grades the **last** `-C` in the string:
+`git -C <worktree> commit -m x && git -C <main checkout> status` is blocked on the main checkout's
+branch, and a bare `git commit` slips through when a later `-C` points somewhere unprotected. Never
+chain git commands that span two checkouts. Put this in the implementer's brief.
 
 `CLAUDE_GIT_OVERRIDE=1` is reserved for commands **the user** explicitly authorised. **An
 orchestrator's instruction to a subagent is not that authorisation.** Never put the override in a
