@@ -1,6 +1,6 @@
 ---
 name: pr-peer-review
-description: Use when peer-reviewing someone else's pull request on any repo — resolves whose standards apply (the repo's own peer-review skill first, otherwise checks derived from that repo's written norms), grades on the shared Blocker/Major/Minor/Nit scale, and posts exactly one PR comment. Defers to a repo-local peer-review skill when one exists. Not for reviewing your own work before opening a PR — that is graph-review.
+description: Use when reviewing someone else's pull request on any repo and the verdict has to land on the PR itself. Also when you need the severity scale for a review, when a repo's own review standards have to be found before grading, or when a review must be posted from the right account. Not for reviewing your own work before opening a PR — that is `superpowers:requesting-code-review`.
 ---
 
 # Peer review — any repo
@@ -23,21 +23,29 @@ skill — not in this file.
 
 Step 1 of the procedure, and it decides everything after it.
 
-1. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
+1. **A review skill for this repo that lives outside it stops the review.** Look before grading: a
+   *review* skill whose name or description names *this specific repo* belongs in that repo, and
+   while it sits anywhere else — the reviewer's own `~/.claude/skills/` is where this happens —
+   nothing in that repo's PRs ever touches it. Say so, and stop: moving it into that repo is its own
+   task on its own branch, and the review runs after. Where that repo already has its own review
+   skill too, the outside one is a stale duplicate: say so, and removing it is the task. A skill that
+   is not about reviewing that repo's pull requests — this one, or one about running a repo locally —
+   never trips this.
+2. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
    session can — a repo-local skill only reaches the skills listing when the session's cwd is
    that repo, so from anywhere else, read the file and follow it. This skill then contributes
    only what that one lacks (the `gh` mechanics, the discipline) and never competes with it.
    What counts: any skill under the repo's `.claude/skills/` whose name or description is about
    reviewing pull requests **on that repo** — `peer-review` is the
-   convention, but the test is the description, not the directory name. A skill about reviewing
-   your own work before opening a PR (`graph-review`, `code-review`) does not count and does
-   not satisfy this step.
-2. **No such skill → derive the checks** from the repo's own written norms, in this order:
+   convention, but the test is the description, not the directory name.
+   A skill about reviewing your own work before opening a PR (`code-review`) does not count and
+   does not satisfy this step.
+3. **No such skill → derive the checks** from the repo's own written norms, in this order:
    `CLAUDE.md` (root and nested) → `CONTRIBUTING.md` → `docs/` (invariants, ADRs, architecture)
    → design specs under `docs/` → the CI workflow definitions (what CI *actually* gates, not
    what the README claims) → `.env.example` → the test layout (which suites are hermetic, which
    skip themselves).
-3. **Write the derived list before grading** — N checks, each with its severity and the doc
+4. **Write the derived list before grading** — N checks, each with its severity and the doc
    line that backs it. An invariant you invented is not a finding. The comment states which
    norms it graded against, and says so plainly when the repo had none.
 
@@ -90,8 +98,8 @@ Each line came from a real finding, and this is the genuinely transferable part.
   declare it provisional.
 - **Discard unsubstantiated findings explicitly, with the reason** → they go under *Checked and
   cleared*. Silence reads as "checked and fine".
-- Tree-scanning checks mean nothing without the head checkout: run from the base they come back
-  clean, and that is a false negative on a Blocker.
+- Tree-scanning checks mean nothing without the tree at the PR's head: run from the base they come
+  back clean, and that is a false negative on a Blocker.
 
 ## Procedure
 
@@ -101,19 +109,23 @@ Scope: GitHub PRs via `gh`. No GitHub remote or no PR → say so and refer to
 
 1. **Resolve standards** (above) and write the check list.
 
-2. **Read the PR, then check out its head.**
+2. **Read the PR, then work from its head.**
 
    ```bash
    R=<owner/repo>
-   gh pr view <n> --repo $R --json number,title,body,state,headRefName,baseRefName,files,url
+   gh pr view <n> --repo $R --json number,title,body,state,headRefName,baseRefName,files,url,headRefOid
    gh pr diff <n> --repo $R
-   gh pr checkout <n> --repo $R
+   gh pr checkout <n> --repo $R      # only where the tree is not already at the head
    ```
 
-   Guards: the working tree must be **clean** before the checkout — otherwise stop and tell the
-   user; never clobber their work. If `state` is not `OPEN`, write the comment to a file and
-   **stop**: reviewing a closed PR is a calibration exercise, and the people who already shipped
-   it do not need the notification.
+   Guards: **check the head out only if the tree is not already at it** — it already is when
+   `git rev-parse HEAD` equals the PR's `headRefOid`. A reviewer dispatched into a worktree
+   already detached at the PR's head must skip the checkout — run there it dies with
+   `fatal: '<branch>' is already used by worktree at '<path>'`, because another worktree holds
+   that branch. Where you do check out, the working tree must be **clean** first — otherwise stop
+   and tell the user; never clobber their work. If `state` is not `OPEN`, write the comment to a
+   file and **stop**: reviewing a closed PR is a calibration exercise, and the people who already
+   shipped it do not need the notification.
 
 3. **Grade** against the derived checks plus the universal ones. An optional first pass with
    `/code-review <n>` is allowed for a correctness sweep, but **its output is never posted raw**
@@ -131,8 +143,8 @@ Scope: GitHub PRs via `gh`. No GitHub remote or no PR → say so and refer to
    post from the wrong account. No issues, no email, no Slack. **Never edit or re-post over a
    previous comment** — a second round is a second comment, so the argument stays readable.
 
-5. **Offer the repo-local skill** — only when checks were derived because the repo had none. One
-   line at the end, **in the chat, not in the PR comment**. It is an offer, not a requirement; if
+5. **Offer to write the repo's own review skill** — only when checks were derived because the
+   repo had none anywhere. One line at the end, **in the chat, not in the PR comment**; if
    accepted, that work is its own task on its own branch.
 
 ## Output
@@ -199,5 +211,32 @@ merge is the user's. Does not open issues, does not commit, does not push, does 
 repo under review. And names no concrete repository path, which is its anti-staleness by
 construction.
 
-Boundary with `graph-review`: that one is the author's, before opening the PR. This one is the
-reviewer's, on someone else's PR.
+Boundary with `superpowers:requesting-code-review`: that one is the author's, before opening the
+PR. This one is the reviewer's, on someone else's PR.
+
+## Rationalizations
+
+Every row is a real failure of a real review.
+
+| Excuse | Reality |
+|--------|---------|
+| "The PR body says the guard is covered" | The body is a claim. Verify against the base branch. |
+| "The suite passed, so the tests ran" | A suite that skips itself proves nothing. Ask what the variable was set to. |
+| "I found nothing on that check, so I left it out" | Silence reads as "checked and fine". Discard it explicitly, with the reason. |
+| "The tree scan came back clean" | From the base it always does. Without the tree at the PR's head that is a false negative on a Blocker. |
+| "I'll add round 2's findings to my first comment" | A second round is a second comment. Never edit or re-post over one. |
+| "The repo documents nothing, so I'll grade against good practice" | An invented invariant is not a finding. Derive the checks or say the repo had none. |
+| "The PR is closed but my review is written" | Write it to a file and stop. The people who shipped it do not need the notification. |
+| "It looks fine, I'll approve it on GitHub" | The verdict is text. Approving through the API and merging are both the user's. |
+
+## Red flags — stop
+
+- You are about to edit or re-post over a previous review comment.
+- You are about to quote extracted data or user content instead of citing `file:line`.
+- You are about to report a finding you could not substantiate, or drop one silently.
+- You are about to run a tree-scanning check without the tree at the PR's head.
+- You are about to grade against a rule no doc in that repo states.
+- You are about to review a repo whose own review skill still lives outside it.
+- You are about to approve through `gh pr review --approve`, or to merge.
+
+**Every one of these means: stop and re-read the rule it breaks.**
