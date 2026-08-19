@@ -1,7 +1,7 @@
 # Design — `pr-peer-review`, lean skill plus four corrections
 
 **Date:** 2026-08-19
-**Status:** approved (design), pending implementation plan
+**Status:** approved (design); partly superseded during implementation — see *Reversal* below
 **Deliverable:** `pr-peer-review/SKILL.md` cut to its operative rules with four defects corrected, a
 new `pr-peer-review/rationale.md`, and `README.md`'s layout block updated. No other file changes.
 
@@ -163,3 +163,37 @@ present and on one line, checked with `grep -F` on the complete string; both fil
   ledger. Real gap, inherited, needs its own design.
 - **Moving `idanalyzer-peer-review` into IDAnalyzer.** Separate repo, separate branch, and now a
   prerequisite for reviewing that repo's PRs.
+
+## Reversal
+
+**2026-08-19, after implementation.** The split did not happen. Measurement during implementation
+put the companion at 769 words of newly written prose against only about 118 words carried out of
+`SKILL.md`, and found roughly 150 words of removable pure argument in a file the *Why* section
+above had assumed was roughly half argument. That assumption is what the split rested on, and it
+did not survive being measured.
+
+The diagnosis is the design's, not the implementation's. This document estimated the shape of the
+argument instead of measuring it — the same mistake it names the delivery cycle's design as having
+made, and the reason given above for why 1300-1500 replaced 500. The correction that section applied
+to the *size* estimate did not get applied to the *proportion* estimate the split itself was built
+on.
+
+Faced with that, the user decided to drop the split rather than force it to fit: no
+`rationale.md`, no relocation of prose out of `SKILL.md`, and no further cutting to chase
+1300-1500. The four corrections and the two new sections — the rationalizations table and the
+red-flags list — ship inside the one file instead.
+
+What shipped: a single `pr-peer-review/SKILL.md` at 2209 words, no companion file, `README.md`
+left untouched. All 30 invariants listed under *Verification* and all 83 directives catalogued by
+the imperative sweep are present in that one file.
+
+Of this document, what still binds: the invariant list, the four corrections as specified, the
+no-escape-clause decision on defects 3 and 4, and the imperative-sweep detection test — each
+describes a property the produced file must have, and it does. What is now historical only: the
+*Why* section's premise that roughly half the file is argument, *The split* section's division of
+material between two files, and the 1300-1500 size target together with its justification — they
+record what was approved before implementation measured the file and found that premise false.
+
+The cost: the lean-skill goal is abandoned for this file rather than pursued by cutting rules, and
+`pr-peer-review/SKILL.md` is now roughly 500 words larger than the 1707 it started at, entirely in
+content the user approved.
