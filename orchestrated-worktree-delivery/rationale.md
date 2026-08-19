@@ -65,6 +65,11 @@ that checkout sits on (`pushing while on protected branch 'main'`), and `gh pr c
 and the head explicitly is the fallback for a session whose cwd cannot move, not an alternative
 to it.
 
+Omitting `--base` fails the same way, quietly rather than loudly: `gh pr create` then defaults it
+to the forge's repository default branch, and *Integration branch* forbids inferring the
+integration branch from that default. On a repo where the two differ, the PR would open against
+the wrong branch with no error to catch it.
+
 ## Why tracker coordinates and the integration branch are not written in the skill
 
 Those coordinates belong in the repo that uses them — a board id written here goes stale the

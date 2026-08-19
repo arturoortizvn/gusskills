@@ -60,10 +60,10 @@ binds whether or not it appears here:
 6. **No Blockers and no Majors → tell the user they can merge.** The merge is never the agent's.
 7. **Blockers or Majors → implementer and reviewer argue through the orchestrator**, two passes —
    findings → technical response → verdict — into a joint report, never with each other.
-8. **Re-dispatch the implementer with the open findings.** Rounds 2 and 3 reuse the same branch,
-   worktree and PR — never a second PR for one item — and **each round's commits reach the PR
-   before the reviewer is re-dispatched**, by the same capped delegation as step 5. *How* a fix
-   round runs is the invoked skill's business; **how many is this cycle's:
+8. **Re-dispatch the implementer with the open findings if changes are needed.** Rounds 2 and 3
+   reuse the same branch, worktree and PR — never a second PR for one item — and **each round's
+   commits reach the PR before the reviewer is re-dispatched**, by the same capped delegation as
+   step 5. *How* a fix round runs is the invoked skill's business; **how many is this cycle's:
    three PR review rounds maximum**. Round 3 runs; when its review still returns Blockers or
    Majors, escalate both positions to the user and stop.
 
@@ -87,16 +87,16 @@ whole-branch final review does not run. **The cap counts PR review rounds only.*
 `git worktree add --detach <absolute path> <the PR's branch>` — created per round by the
 orchestrator, removed once the comment is posted. Do not delegate it:
 `superpowers:using-git-worktrees` creates on a *new* branch and dies with
-`fatal: a branch named '<branch>' already exists`. **Not the orchestrator's checkout**: `gh pr
-checkout` there fails while the implementer's worktree holds the branch —
+`fatal: a branch named '<branch>' already exists`. **Not the orchestrator's checkout**:
+`gh pr checkout` there fails while the implementer's worktree holds the branch —
 `fatal: '<branch>' is already used by worktree at '<path>'`. **Not the implementer's**: the fix
 round reuses it.
 
 **Brief the reviewer that the tree is already at the head and no checkout is needed** — otherwise
-`pr-peer-review` runs `gh pr checkout <n>`, which inside the review worktree hits the `fatal:`
-above. **The comment body is written outside the worktree, under `$TMPDIR`** — a body file left
-inside makes the removal refuse (`contains modified or untracked files`), and `--force` is not an
-option this cycle allows.
+`pr-peer-review` runs `gh pr checkout <n>`, which inside the review worktree hits the `already
+used by worktree` fatal above. **The comment body is written outside the worktree, under
+`$TMPDIR`** — a body file left inside makes the removal refuse
+(`contains modified or untracked files`), and `--force` is not an option this cycle allows.
 
 ## Ticket hook
 - **The item is filed in whatever tracker that repo uses, before the implementer is dispatched, and
@@ -133,8 +133,8 @@ chain git commands that span two checkouts. Put this in the implementer's brief.
 orchestrator's instruction to a subagent is not that authorisation.** Never put the override in a
 brief; treat a subagent that reached for it as a report to correct.
 
-The hook also blocks `git reset`
-with `--hard`. To update a branch after something merged into the base, use
+The hook also blocks a hard reset: `git reset`
+run with `--hard`. To update a branch after something merged into the base, use
 `gh pr update-branch <n>` then `git pull --ff-only`.
 
 ## Closeout
@@ -151,10 +151,10 @@ git fetch origin --prune
 ```
 
 **The worktree comes out first, and it is not optional.** While the branch is checked out in a
-worktree git refuses to delete it — `error: cannot delete branch '<name>' used by worktree at
-'<path>'` — and `-D` refuses for the same reason. Where removal refuses because files there were
-never committed, do not `--force`: show them to the user first, per
-`superpowers:finishing-a-development-branch`.
+worktree git refuses to delete it —
+`error: cannot delete branch '<name>' used by worktree at '<path>'` — and `-D` refuses for the
+same reason. Where removal refuses because files there were never committed, do not `--force`:
+show them to the user first, per `superpowers:finishing-a-development-branch`.
 
 `-d` is the default and verifies the branch really merged. Where the repo squash-merges it refuses
 — use `-D` there, and only there.
