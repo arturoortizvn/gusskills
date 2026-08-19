@@ -340,3 +340,15 @@ flags, the rationale opener — is written verbatim here.
 items renumber to 2, 3 and 4; the invariant list refers to them by content, not by number, so the
 renumbering breaks nothing. Step 9's `stops the review` grep is the gate's own marker phrase, chosen
 because it appears in no other rule.
+
+## Reversal
+
+**2026-08-19, during implementation.** The split was dropped. Measurement put the companion at 769
+words of newly written prose against only about 118 carried out of `SKILL.md`, which falsified the
+design's premise that roughly half the file was argument; the user chose to drop the split rather
+than force it to fit. The four corrections and the two new sections shipped in a single
+`pr-peer-review/SKILL.md` at 2209 words, with no companion file and `README.md` untouched.
+
+Historical only, kept as the dated record of what was approved: Steps 3, 4 and 8, the `rationale.md`
+pointer in Step 5, and Step 9's `rationale.md` assertions. Everything else still binds — the four
+corrections as worded, the imperative inventory of Step 2, and the two-part verification.

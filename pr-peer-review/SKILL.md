@@ -25,10 +25,10 @@ Step 1 of the procedure, and it decides everything after it.
 
 1. **A review skill for this repo that lives outside it stops the review.** Look before grading:
    a skill whose name or description names *this specific repo* belongs in that repo, and while
-   it sits anywhere else — the reviewer's own `~/.claude/skills/` is where this happens — it ages
-   in silence while nothing in that repo's PRs ever touches it. Say so, and stop: moving it into
-   that repo is its own task on its own branch, and the review runs after. A skill that names no
-   repo, this one included, never trips this.
+   it sits anywhere else — the reviewer's own `~/.claude/skills/` is where this happens — nothing
+   in that repo's PRs ever touches it. Say so, and stop: moving it into that repo is its own task
+   on its own branch, and the review runs after. A skill that names no repo, this one included,
+   never trips this.
 2. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
    session can — a repo-local skill only reaches the skills listing when the session's cwd is
    that repo, so from anywhere else, read the file and follow it. This skill then contributes
@@ -111,18 +111,19 @@ Scope: GitHub PRs via `gh`. No GitHub remote or no PR → say so and refer to
 
    ```bash
    R=<owner/repo>
-   gh pr view <n> --repo $R --json number,title,body,state,headRefName,baseRefName,files,url
+   gh pr view <n> --repo $R --json number,title,body,state,headRefName,baseRefName,files,url,headRefOid
    gh pr diff <n> --repo $R
    gh pr checkout <n> --repo $R      # only where the tree is not already at the head
    ```
 
-   Guards: **check the head out only if the tree is not already at it.** A reviewer dispatched
-   into a worktree already detached at the PR's head must skip the checkout — run there it dies
-   with `fatal: '<branch>' is already used by worktree at '<path>'`, because another worktree
-   holds that branch. Where you do check out, the working tree must be **clean** first —
-   otherwise stop and tell the user; never clobber their work. If `state` is not `OPEN`, write
-   the comment to a file and **stop**: reviewing a closed PR is a calibration exercise, and the
-   people who already shipped it do not need the notification.
+   Guards: **check the head out only if the tree is not already at it** — it already is when
+   `git rev-parse HEAD` equals the PR's `headRefOid`. A reviewer dispatched into a worktree
+   already detached at the PR's head must skip the checkout — run there it dies with
+   `fatal: '<branch>' is already used by worktree at '<path>'`, because another worktree holds
+   that branch. Where you do check out, the working tree must be **clean** first — otherwise stop
+   and tell the user; never clobber their work. If `state` is not `OPEN`, write the comment to a
+   file and **stop**: reviewing a closed PR is a calibration exercise, and the people who already
+   shipped it do not need the notification.
 
 3. **Grade** against the derived checks plus the universal ones. An optional first pass with
    `/code-review <n>` is allowed for a correctness sweep, but **its output is never posted raw**
