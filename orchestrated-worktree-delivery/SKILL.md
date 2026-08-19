@@ -62,9 +62,9 @@ What stays with the orchestrator:
    never talk to each other directly.
 7. **Re-dispatch the implementer with the open findings** if changes are needed. Rounds 2
    and 3 reuse the same branch, the same worktree and the same PR — never open a second PR
-   for one item. *How* a fix round runs is the invoked dispatch skill's business; **how
-   many is this cycle's: three rounds maximum**, and on the third escalate both positions
-   to the user and stop.
+   for one item, and each round's review is a new comment on that PR. *How* a fix round
+   runs is the invoked dispatch skill's business; **how many is this cycle's: three rounds
+   maximum**, and on the third escalate both positions to the user and stop.
 
 Also:
 - **Report each item as it clears review.** Never batch — an item that cleared an hour
@@ -76,6 +76,13 @@ Also:
 **Dispatch `pr-peer-review`.** It resolves whose standards apply — the repo's own review skill
 when it has one, checks derived from the repo's written norms when it does not — and carries the
 scale, the comment format and the posting mechanics.
+
+**Every review round posts its own comment on the PR — always, and never over an existing one.**
+Rounds 2 and 3 each add a comment of their own, and a round that clears with no findings posts
+that verdict too. An existing comment is never edited, never replaced, and never a reason to skip
+posting: `pr-peer-review` already forbids editing a previous comment, and this cycle adds that no
+round is exempt from posting at all. The PR is what the user reads before merging, so a verdict
+that lives only in the orchestrator's report is a verdict the merge decision never sees.
 
 The convention that makes one step enough: **a repo's review standards live in that repo.** This
 cycle deliberately does not look them up itself. A second resolution step here would be a second
@@ -113,9 +120,15 @@ not from where the git command runs. With the main checkout on the integration b
 the work in a worktree on `feature/*`, the hook reads the integration branch and blocks a
 legitimate commit.
 
-**The clean exit is `git -C <absolute worktree path>` on every call.** It lets the hook
-resolve the real branch and approve the commit on merit. Put this in the implementer's
-brief — it is the most common way a dispatch stalls.
+**The clean exit is `git -C <absolute worktree path>`, one git command per shell call.** It
+lets the hook resolve the real branch and approve the commit on merit. Put this in the
+implementer's brief — it is the most common way a dispatch stalls.
+
+`-C` alone is not the whole rule: where one shell call chains several git commands, the hook
+grades the **last** `-C` in the string. `git -C <worktree> commit -m x && git -C <main checkout>
+status` is blocked on the main checkout's branch even though the commit was legitimate, and the
+same reading lets a bare `git commit` through when a later `-C` happens to point somewhere
+unprotected. Never chain git commands that span two checkouts — split them into separate calls.
 
 `CLAUDE_GIT_OVERRIDE=1` is reserved for commands **the user** explicitly authorised.
 **An orchestrator's instruction to a subagent is not that authorisation.** Never put the
@@ -127,15 +140,24 @@ forbidden command, no force-push.
 
 ## Closeout
 On merge, move the ticket to `Done` where there is one, in the same batch as the local cleanup.
-These commands
-are the orchestrator's own — per the role boundary, local branch hygiene lands in no diff:
+These commands are the orchestrator's own — per the role boundary, local branch hygiene lands in
+no diff:
 
 ```bash
+git worktree remove <absolute worktree path>   # never from inside it
+git worktree prune
 git switch <the PR's base>      # gh pr view <n> --json baseRefName -q .baseRefName
 git pull --ff-only
 git branch -d <merged-branch>
 git fetch origin --prune
 ```
+
+**The worktree comes out first, and it is not optional.** While the branch is checked out in a
+worktree git refuses to delete it — `error: cannot delete branch '<name>' used by worktree at
+'<path>'` — and `-D` refuses for the same reason, so the squash-merge fallback below does not
+rescue a skipped removal. Where removal refuses because files in that worktree were never
+committed, do not `--force`: show them to the user first, per
+`superpowers:finishing-a-development-branch`.
 
 The base comes from the PR rather than a branch name written here: this cycle runs on repos
 that integrate into `main` and repos that integrate into something else, and the PR already
