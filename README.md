@@ -37,8 +37,13 @@ it again somewhere else and check the PR out there.
 Skills whose checks cite a specific repo's paths, line numbers or invariants. Those live in
 that repo, at `.claude/skills/peer-review/`, because a skill outside the repo it describes
 goes stale in silence — nothing in a PR that renames a service ever touches a file here.
-`idanalyzer-peer-review` is the outstanding case: its destination is the IDAnalyzer repo, not
-this one.
+`pr-peer-review` now enforces this: a review skill naming a specific repo while living
+outside it stops the review until it is moved in.
+
+`idanalyzer-peer-review` was the standing exception and no longer exists. On 2026-08-19 it was
+deleted from `~/.claude/skills/` rather than moved into `LendLogic.IDAnalyzer`, so IDAnalyzer's
+PRs are now graded against that repo's own written norms like any repo without a review skill.
+Nothing is pending: do not go looking for it.
 
 ## Branch flow
 
