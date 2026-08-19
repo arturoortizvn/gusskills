@@ -23,11 +23,13 @@ skill — not in this file.
 
 Step 1 of the procedure, and it decides everything after it.
 
-1. **A review skill for this repo that lives outside it stops the review.** Look before grading:
-   a skill whose name or description names *this specific repo* belongs in that repo, and while
-   it sits anywhere else — the reviewer's own `~/.claude/skills/` is where this happens — nothing
-   in that repo's PRs ever touches it. Say so, and stop: moving it into that repo is its own task
-   on its own branch, and the review runs after. A skill that names no repo, this one included,
+1. **A review skill for this repo that lives outside it stops the review.** Look before grading: a
+   *review* skill whose name or description names *this specific repo* belongs in that repo, and
+   while it sits anywhere else — the reviewer's own `~/.claude/skills/` is where this happens —
+   nothing in that repo's PRs ever touches it. Say so, and stop: moving it into that repo is its own
+   task on its own branch, and the review runs after. Where that repo already has its own review
+   skill too, the outside one is a stale duplicate: say so, and removing it is the task. A skill that
+   is not about reviewing that repo's pull requests — this one, or one about running a repo locally —
    never trips this.
 2. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
    session can — a repo-local skill only reaches the skills listing when the session's cwd is
@@ -96,8 +98,8 @@ Each line came from a real finding, and this is the genuinely transferable part.
   declare it provisional.
 - **Discard unsubstantiated findings explicitly, with the reason** → they go under *Checked and
   cleared*. Silence reads as "checked and fine".
-- Tree-scanning checks mean nothing without the head checkout: run from the base they come back
-  clean, and that is a false negative on a Blocker.
+- Tree-scanning checks mean nothing without the tree at the PR's head: run from the base they come
+  back clean, and that is a false negative on a Blocker.
 
 ## Procedure
 
@@ -221,7 +223,7 @@ Every row is a real failure of a real review.
 | "The PR body says the guard is covered" | The body is a claim. Verify against the base branch. |
 | "The suite passed, so the tests ran" | A suite that skips itself proves nothing. Ask what the variable was set to. |
 | "I found nothing on that check, so I left it out" | Silence reads as "checked and fine". Discard it explicitly, with the reason. |
-| "The tree scan came back clean" | From the base it always does. Without the head checkout that is a false negative on a Blocker. |
+| "The tree scan came back clean" | From the base it always does. Without the tree at the PR's head that is a false negative on a Blocker. |
 | "I'll add round 2's findings to my first comment" | A second round is a second comment. Never edit or re-post over one. |
 | "The repo documents nothing, so I'll grade against good practice" | An invented invariant is not a finding. Derive the checks or say the repo had none. |
 | "The PR is closed but my review is written" | Write it to a file and stop. The people who shipped it do not need the notification. |
@@ -232,7 +234,7 @@ Every row is a real failure of a real review.
 - You are about to edit or re-post over a previous review comment.
 - You are about to quote extracted data or user content instead of citing `file:line`.
 - You are about to report a finding you could not substantiate, or drop one silently.
-- You are about to run a tree-scanning check without the head checked out.
+- You are about to run a tree-scanning check without the tree at the PR's head.
 - You are about to grade against a rule no doc in that repo states.
 - You are about to review a repo whose own review skill still lives outside it.
 - You are about to approve through `gh pr review --approve`, or to merge.

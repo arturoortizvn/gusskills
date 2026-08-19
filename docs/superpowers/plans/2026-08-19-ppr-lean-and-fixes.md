@@ -347,8 +347,11 @@ because it appears in no other rule.
 words of newly written prose against only about 118 carried out of `SKILL.md`, which falsified the
 design's premise that roughly half the file was argument; the user chose to drop the split rather
 than force it to fit. The four corrections and the two new sections shipped in a single
-`pr-peer-review/SKILL.md` at 2209 words, with no companion file and `README.md` untouched.
+`pr-peer-review/SKILL.md` at 2263 words, with no companion file and `README.md` untouched.
 
 Historical only, kept as the dated record of what was approved: Steps 3, 4 and 8, the `rationale.md`
 pointer in Step 5, and Step 9's `rationale.md` assertions. Everything else still binds — the four
-corrections as worded, the imperative inventory of Step 2, and the two-part verification.
+corrections as worded, the imperative inventory of Step 2, and the two-part verification — except
+that `d287e1f` reworded corrections 2 and 3/4, adding the guard's `headRefOid` comparison and
+dropping the gate's borrowed "ages in silence" clause, and the final review narrowed the gate's
+wording again.

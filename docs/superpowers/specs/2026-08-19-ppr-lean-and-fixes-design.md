@@ -158,6 +158,11 @@ present and on one line, checked with `grep -F` on the complete string; both fil
 
 - **The delivery cycle.** It is not touched: the relocation decision was chosen precisely so the two
   skills agree without editing it.
+- **The staleness this pass creates in the delivery cycle.** Correction 2 leaves
+  `orchestrated-worktree-delivery/SKILL.md:95-96` stale: it still says this skill runs
+  `gh pr checkout` unconditionally. Only that justification clause is affected — the directive it
+  supports still stands — and it is routed to its own branch rather than repaired here, for the
+  reason in the bullet above.
 - **The missing triage point for deferred minors** — the cycle suppresses the dispatch skill's
   whole-branch review, which is where that skill assigns that triage, and this file never reads a
   ledger. Real gap, inherited, needs its own design.
@@ -183,7 +188,7 @@ Faced with that, the user decided to drop the split rather than force it to fit:
 1300-1500. The four corrections and the two new sections — the rationalizations table and the
 red-flags list — ship inside the one file instead.
 
-What shipped: a single `pr-peer-review/SKILL.md` at 2209 words, no companion file, `README.md`
+What shipped: a single `pr-peer-review/SKILL.md` at 2263 words, no companion file, `README.md`
 left untouched. All 30 invariants listed under *Verification* and all 83 directives catalogued by
 the imperative sweep are present in that one file.
 
