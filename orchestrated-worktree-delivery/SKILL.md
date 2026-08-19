@@ -25,12 +25,15 @@ local copy of it goes stale without anyone noticing, silently contradicting the 
 version. If you find yourself writing a subagent brief template into this cycle, you are
 duplicating something that already exists and will drift.
 
-**Precedence.** The delegation covers the *how* of dispatch. Where this cycle and any skill
-it invokes disagree, this cycle governs four things: the review gate, the round cap, when
-the PR is opened, and the closeout. Everything else — how to brief, which model, how to
-resume an implementer, how to handle its report — follows the invoked skill. This is stated
-without version numbers or quoted values from another skill on purpose, so it stays true
-after that skill changes.
+**Precedence.** The delegation covers the *how* of dispatch. **Where this cycle states a rule
+and an invoked skill says otherwise, this cycle governs; where this cycle is silent, the
+invoked skill governs.** It is a principle rather than a list of governed topics because the
+list was already incomplete — the role boundary and the ticket's ownership bind exactly as
+hard as the review gate, the round cap, when the PR is opened and the closeout, and every rule
+this file gains would have to be added to it again. What this cycle does not state — how to
+brief, which model, how to resume an implementer, how to handle its report — follows the
+invoked skill. None of this quotes version numbers or values from another skill, on purpose,
+so it stays true after that skill changes.
 
 ## Role boundary
 **The orchestrator does not touch the repo.** Every change is dispatched — including doc
@@ -53,18 +56,35 @@ What stays with the orchestrator:
    worktree (`superpowers:using-git-worktrees`).
 3. **The implementer finishes, reports, and waits.** It does not push, does not open a
    PR, does not merge.
-4. **The orchestrator opens the PR**, puts its URL on the ticket and moves the ticket to
-   `Code Review`, then dispatches the reviewer (see *Reviewer resolution*).
-5. **No Blockers and no Majors → tell the user they can merge.** The merge is always the
+4. **The orchestrator dispatches the task review** of that report —
+   `superpowers:subagent-driven-development`'s per-task gate, a reviewer seat the controller
+   dispatches after the report and never one the implementer spawns. It runs before the push,
+   so nothing unreviewed reaches a PR, and the fix rounds it spends do not consume the three
+   PR review rounds.
+5. **The orchestrator gets the branch pushed and the PR opened** —
+   `superpowers:finishing-a-development-branch`, capped at push and PR: no menu, no local
+   merge, no merge at all. **Run it from the item's worktree, never the orchestrator's
+   checkout**: there the hook grades the push against the integration branch the checkout
+   sits on (`pushing while on protected branch 'main'`), and `gh pr create` defaults `--head`
+   to that same branch, opening the PR *from* the integration branch. Where the session's cwd
+   cannot move into the worktree, name both — `git -C <the worktree>` on the push, per *Git
+   mechanics*, and `--head <the item's branch>` on the PR. **The base is the integration
+   branch, passed as `--base`**: left off, `gh` falls back to the forge's default branch,
+   which *Integration branch* forbids. Then the PR's URL goes on the ticket, the ticket moves
+   to the repo's review status, and the reviewer is dispatched (see *Reviewer resolution*).
+6. **No Blockers and no Majors → tell the user they can merge.** The merge is always the
    user's, never the agent's.
-6. **Blockers or Majors → implementer and reviewer argue through the orchestrator**, two
+7. **Blockers or Majors → implementer and reviewer argue through the orchestrator**, two
    passes — findings → technical response → verdict — delivering a joint report. They
    never talk to each other directly.
-7. **Re-dispatch the implementer with the open findings** if changes are needed. Rounds 2
+8. **Re-dispatch the implementer with the open findings** if changes are needed. Rounds 2
    and 3 reuse the same branch, the same worktree and the same PR — never open a second PR
-   for one item, and each round's review is a new comment on that PR. *How* a fix round
-   runs is the invoked dispatch skill's business; **how many is this cycle's: three rounds
-   maximum**, and on the third escalate both positions to the user and stop.
+   for one item, and each round's review is a new comment on that PR. **The round's commits
+   reach the PR before the reviewer is re-dispatched**, by the same capped delegation as
+   step 5; a reviewer sent at a stale head comments on code that no longer exists. *How* a
+   fix round runs is the invoked dispatch skill's business; **how many is this cycle's:
+   three PR review rounds maximum**, and on the third escalate both positions to the user
+   and stop.
 
 Also:
 - **Report each item as it clears review.** Never batch — an item that cleared an hour
@@ -84,6 +104,33 @@ posting: `pr-peer-review` already forbids editing a previous comment, and this c
 round is exempt from posting at all. The PR is what the user reads before merging, so a verdict
 that lives only in the orchestrator's report is a verdict the merge decision never sees.
 
+**Two review layers, and only two.** The dispatch skill's own per-task review stays — it is a
+reviewer seat the orchestrator dispatches once the implementer has reported, not something that
+runs inside the implementer's dispatch, and step 4 is where this cycle schedules it: the cheap
+gate that keeps unreviewed work from reaching a PR. Its whole-branch final review does not run:
+the peer review on the PR is that review, and running both puts two verdicts on one diff with
+nothing to break the tie. **The three-round cap counts PR review rounds only**; the fix rounds the
+task review spends are the invoked skill's business and do not consume them.
+
+**The reviewer gets a worktree of its own**, detached at the PR's head:
+`git worktree add --detach <absolute path> <the PR's branch>`. That command is written here
+rather than delegated because `superpowers:using-git-worktrees` only creates a worktree on a
+*new* branch — `git worktree add "$path" -b "$BRANCH_NAME"`, which against the branch the PR
+already has dies with `fatal: a branch named '<branch>' already exists`, and its preferred
+native tool creates branches too. Detached, the worktree coexists with the implementer's on
+that same branch. The orchestrator creates it for the round and removes it once the comment is
+posted — local hygiene that lands in no diff, so the role boundary leaves it here. Not the
+orchestrator's checkout: `gh pr checkout` there fails outright while the implementer's worktree
+holds the branch — `fatal: '<branch>' is already used by worktree at '<path>'` — and where it
+does succeed it drags the main checkout off the integration branch that *Git mechanics* depends
+on. Not the implementer's either: the fix round reuses it, and whatever the reviewer leaves
+behind blocks the removal at *Closeout*. A fresh worktree also satisfies `pr-peer-review`'s
+clean-tree guard by construction, so the brief says the tree is already at the head and no
+checkout is needed — and that **the comment body is written outside that worktree, under
+`$TMPDIR`**. `pr-peer-review` posts with `gh pr comment --body-file <file>`, and a body file
+left in the review tree is enough to make the removal refuse (`contains modified or untracked
+files`), where `--force` is not an option this cycle allows.
+
 The convention that makes one step enough: **a repo's review standards live in that repo.** This
 cycle deliberately does not look them up itself. A second resolution step here would be a second
 place to keep in sync, and it would legitimise keeping repo-specific checks outside the repo they
@@ -99,20 +146,31 @@ The invariant, on any repo:
   item sits at `In Progress` while the work is actually in progress, and the implementer
   has a real ticket number to put in the PR body rather than one that does not exist yet.
 - Dependencies and status are set in the same pass.
-- **One item maps to one PR**, and the PR's URL goes on the item at step 4.
+- **One item maps to one PR**, and the PR's URL goes on the item at step 5.
 
 **Resolving the tracker.** Read it from the repo's own written norms, in order: `CLAUDE.md`
-(root and nested) → `.claude/` → `docs/`. What you need before dispatching: which board or
-project, which item type the work maps to, the status and dependency fields, and the field
-the PR URL goes in. Those coordinates belong in the repo that uses them — a board id written
-here goes stale the moment someone moves it, and nothing in that repo's PRs ever touches this
-file.
+(root and nested) → `.claude/` → `CONTRIBUTING.md` → `docs/`. What you need before dispatching:
+which board or project, which item type the work maps to, the status and dependency fields, and
+the field the PR URL goes in. Those coordinates belong in the repo that uses them — a board id
+written here goes stale the moment someone moves it, and nothing in that repo's PRs ever touches
+this file.
 
 **No tracker.** Say so once, then run the cycle with the PR as the item of record: its body
 carries what the ticket would have, and the review heading carries the branch instead of a
 ticket — which is what `pr-peer-review` already does on a repo without that convention. Do not
 invent a tracker, and do not skip the step silently: an unfiled item on a repo that *does* have
 one is the failure this hook exists to prevent.
+
+## Integration branch
+Every branch is cut from it and every PR targets it, so it is resolved **before the first
+dispatch**, from the repo's own written norms, in the same order the tracker uses: `CLAUDE.md`
+(root and nested) → `.claude/` → `CONTRIBUTING.md` → `docs/`. Where none of them names it, ask
+the user.
+
+Do not infer it from the forge's default branch: on a repo that integrates somewhere else, the
+default is the one branch the work must not target. It is not written here for the reason no board
+id is — `main` on one repo, something else on the next. Once the PR exists the base is read from
+it (`gh pr view <n> --json baseRefName`), which is what *Closeout* does.
 
 ## Git mechanics inside a worktree
 `~/.claude/hooks/protect-git.sh` resolves the current branch from the **session's** cwd,
