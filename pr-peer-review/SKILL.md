@@ -1,6 +1,6 @@
 ---
 name: pr-peer-review
-description: Use when peer-reviewing someone else's pull request on any repo — resolves whose standards apply (the repo's own peer-review skill first, otherwise checks derived from that repo's written norms), grades on the shared Blocker/Major/Minor/Nit scale, and posts exactly one PR comment. Defers to a repo-local peer-review skill when one exists. Not for reviewing your own work before opening a PR — that is graph-review.
+description: Use when reviewing someone else's pull request on any repo and the verdict has to land on the PR itself. Also when you need the severity scale for a review, when a repo's own review standards have to be found before grading, or when a review must be posted from the right account. Not for reviewing your own work before opening a PR — that is `superpowers:requesting-code-review`.
 ---
 
 # Peer review — any repo
@@ -9,41 +9,45 @@ description: Use when peer-reviewing someone else's pull request on any repo —
 
 Reviews someone else's pull request on any repository and delivers the result as **exactly one
 PR comment**. It carries the half of peer review that transfers between repos — the severity
-scale, the comment format, the posting mechanics, and the discipline that keeps findings
-honest. The half that does not transfer, the checks that cite a repo's own paths, seams and
-invariants, comes from that repo.
+scale, the comment format, the posting mechanics, the discipline that keeps findings honest —
+while the half that does not, the checks citing a repo's own paths, seams and invariants, comes
+from that repo.
 
-**This skill names no concrete repository path, ever.** That is what makes it safe to live
-outside the repos it reviews: a review skill kept in the reviewer's home directory ages in
-silence, because nothing in a PR that renames a service ever touches a file there. The moment
-a check you want needs a real path or line number, that check belongs in the repo's own review
-skill — not in this file.
+**This skill names no concrete repository path, ever.** The moment a check you want needs a real
+path or line number, that check belongs in the repo's own review skill — not in this file.
+
+Why each rule has this shape: `rationale.md`, in this directory. Read it before relaxing a rule,
+not before following one.
 
 ## Standards resolution
 
 Step 1 of the procedure, and it decides everything after it.
 
-1. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
+1. **A review skill for this repo that lives outside it stops the review.** Look before grading:
+   a skill whose name or description names *this specific repo* belongs in that repo, and while
+   it sits anywhere else — the reviewer's own `~/.claude/skills/` is where this happens — it ages
+   in silence while nothing in that repo's PRs ever touches it. Say so, and stop: moving it into
+   that repo is its own task on its own branch, and the review runs after. A skill that names no
+   repo, this one included, never trips this.
+2. **The repo has a review skill of its own → grade with its checks.** Invoke it where the
    session can — a repo-local skill only reaches the skills listing when the session's cwd is
    that repo, so from anywhere else, read the file and follow it. This skill then contributes
    only what that one lacks (the `gh` mechanics, the discipline) and never competes with it.
    What counts: any skill under the repo's `.claude/skills/` whose name or description is about
-   reviewing pull requests **on that repo** — `peer-review` is the
-   convention, but the test is the description, not the directory name. A skill about reviewing
-   your own work before opening a PR (`graph-review`, `code-review`) does not count and does
-   not satisfy this step.
-2. **No such skill → derive the checks** from the repo's own written norms, in this order:
+   reviewing pull requests **on that repo** — `peer-review` is the convention, but the test is
+   the description, not the directory name.
+   A skill about reviewing your own work before opening a PR (`code-review`) does not count and
+   does not satisfy this step.
+3. **No such skill → derive the checks** from the repo's own written norms, in this order:
    `CLAUDE.md` (root and nested) → `CONTRIBUTING.md` → `docs/` (invariants, ADRs, architecture)
    → design specs under `docs/` → the CI workflow definitions (what CI *actually* gates, not
    what the README claims) → `.env.example` → the test layout (which suites are hermetic, which
    skip themselves).
-3. **Write the derived list before grading** — N checks, each with its severity and the doc
+4. **Write the derived list before grading** — N checks, each with its severity and the doc
    line that backs it. An invariant you invented is not a finding. The comment states which
    norms it graded against, and says so plainly when the repo had none.
 
 ## Severity scale
-
-Stated as a principle plus examples, because a list of one repo's breaches does not travel.
 
 - **🔴 Blocker** — merging it damages the service or makes the repo's own documentation lie:
   breaks a documented contract, seam or invariant without updating the doc that asserts it;
@@ -57,9 +61,8 @@ Stated as a principle plus examples, because a list of one repo's breaches does 
 
 ## Universal checks
 
-These need no repo doc because they hold anywhere, and they apply *on top of* the derived ones.
-**Precedence: where the repo has its own review skill, its checks and its severities govern** —
-these only cover what that skill is silent about.
+They apply *on top of* the derived ones. **Precedence: where the repo has its own review skill, its
+checks and its severities govern** — these only cover what that skill is silent about.
 
 1. **Secrets** — no key, token or connection string in code, tests, examples, docs or
    infrastructure-as-code params. 🔴
@@ -80,18 +83,14 @@ these only cover what that skill is silent about.
 
 ## Discipline
 
-Each line came from a real finding, and this is the genuinely transferable part.
-
 - Verify the PR body's claims **against the base branch** (`git show origin/<base>:<path>`),
   never against the PR's description of itself.
-- **Test guards by mutating them.** A guard with no coverage leaves the suite green while it
-  guards nothing. If the PR adds one, find the test that fails when it is removed.
-- Run experiments in a **clean tree**; on a dirty tree a result can be a false negative — or you
-  declare it provisional.
+- **Test guards by mutating them.** If the PR adds one, find the test that fails when it is
+  removed.
+- Run experiments in a **clean tree**, or declare the result provisional.
 - **Discard unsubstantiated findings explicitly, with the reason** → they go under *Checked and
-  cleared*. Silence reads as "checked and fine".
-- Tree-scanning checks mean nothing without the head checkout: run from the base they come back
-  clean, and that is a false negative on a Blocker.
+  cleared*.
+- Tree-scanning checks mean nothing without the head checkout.
 
 ## Procedure
 
@@ -101,19 +100,21 @@ Scope: GitHub PRs via `gh`. No GitHub remote or no PR → say so and refer to
 
 1. **Resolve standards** (above) and write the check list.
 
-2. **Read the PR, then check out its head.**
+2. **Read the PR, then work from its head.**
 
    ```bash
    R=<owner/repo>
    gh pr view <n> --repo $R --json number,title,body,state,headRefName,baseRefName,files,url
    gh pr diff <n> --repo $R
-   gh pr checkout <n> --repo $R
+   gh pr checkout <n> --repo $R      # only where the tree is not already at the head
    ```
 
-   Guards: the working tree must be **clean** before the checkout — otherwise stop and tell the
-   user; never clobber their work. If `state` is not `OPEN`, write the comment to a file and
-   **stop**: reviewing a closed PR is a calibration exercise, and the people who already shipped
-   it do not need the notification.
+   Guards: **check the head out only if the tree is not already at it.** A reviewer dispatched
+   into a worktree already detached at the PR's head must skip the checkout — run there it dies
+   with `fatal: '<branch>' is already used by worktree at '<path>'`, because another worktree
+   holds that branch. Where you do check out, the working tree must be **clean** first —
+   otherwise stop and tell the user; never clobber their work. If `state` is not `OPEN`, write
+   the comment to a file and **stop**.
 
 3. **Grade** against the derived checks plus the universal ones. An optional first pass with
    `/code-review <n>` is allowed for a correctness sweep, but **its output is never posted raw**
@@ -129,10 +130,10 @@ Scope: GitHub PRs via `gh`. No GitHub remote or no PR → say so and refer to
    Identity per `~/.claude/personal-projects.md`: work repos → the work account; personal repos
    → the personal one. On a mismatch, **stop and ask for the switch** (`gh auth switch`); never
    post from the wrong account. No issues, no email, no Slack. **Never edit or re-post over a
-   previous comment** — a second round is a second comment, so the argument stays readable.
+   previous comment** — a second round is a second comment.
 
-5. **Offer the repo-local skill** — only when checks were derived because the repo had none. One
-   line at the end, **in the chat, not in the PR comment**. It is an offer, not a requirement; if
+5. **Offer to write the repo's own review skill** — only when checks were derived because the
+   repo had none anywhere. One line at the end, **in the chat, not in the PR comment**; if
    accepted, that work is its own task on its own branch.
 
 ## Output
@@ -176,11 +177,11 @@ the PR body names none — which is also the 🟡 of universal check 8.
 All four severity headers are always present, `_None._` under the empty ones, so a reader can
 tell "no blockers" from "blockers not considered". Every finding cites `file:line`.
 
-The three dispositions are not interchangeable, and no check is left out of all three:
-*Checked and cleared* is "I ran it and there was nothing", *Could not verify* is "I could not
-run it", and *Not applicable* is "it cannot apply here" — a docs-only repo has no test suite, no
-env vars and no request path, so universal checks 3, 5 and 7 belong in the third, not stretched
-into either of the first two. Drop a heading only when nothing landed under it.
+The three dispositions are not interchangeable, and no check is left out of all three: *Checked and
+cleared* is "I ran it and there was nothing", *Could not verify* is "I could not run it", and *Not
+applicable* is "it cannot apply here". A docs-only repo has no test suite, no env vars and no
+request path, so its universal checks 3, 5 and 7 go under *Not applicable*, never stretched into
+either of the first two. Drop a heading only when nothing landed under it.
 
 **Verdict logic:**
 
@@ -196,8 +197,34 @@ A pure-formatting diff gets only `Auto-formatting only — no review needed.` an
 
 Does not merge. Does not approve through `gh pr review --approve` — the verdict is text, and the
 merge is the user's. Does not open issues, does not commit, does not push, does not modify the
-repo under review. And names no concrete repository path, which is its anti-staleness by
-construction.
+repo under review. And names no concrete repository path.
 
-Boundary with `graph-review`: that one is the author's, before opening the PR. This one is the
-reviewer's, on someone else's PR.
+Boundary with `superpowers:requesting-code-review`: that one is the author's, before opening the
+PR. This one is the reviewer's, on someone else's PR.
+
+## Rationalizations
+
+Every row is a real failure of a real review.
+
+| Excuse | Reality |
+|--------|---------|
+| "The PR body says the guard is covered" | The body is a claim. Verify against the base branch. |
+| "The suite passed, so the tests ran" | A suite that skips itself proves nothing. Ask what the variable was set to. |
+| "I found nothing on that check, so I left it out" | Silence reads as "checked and fine". Discard it explicitly, with the reason. |
+| "The tree scan came back clean" | From the base it always does. Without the head checkout that is a false negative on a Blocker. |
+| "I'll add round 2's findings to my first comment" | A second round is a second comment. Never edit or re-post over one. |
+| "The repo documents nothing, so I'll grade against good practice" | An invented invariant is not a finding. Derive the checks or say the repo had none. |
+| "The PR is closed but my review is written" | Write it to a file and stop. The people who shipped it do not need the notification. |
+| "It looks fine, I'll approve it on GitHub" | The verdict is text. Approving through the API and merging are both the user's. |
+
+## Red flags — stop
+
+- You are about to edit or re-post over a previous review comment.
+- You are about to quote extracted data or user content instead of citing `file:line`.
+- You are about to report a finding you could not substantiate, or drop one silently.
+- You are about to run a tree-scanning check without the head checked out.
+- You are about to grade against a rule no doc in that repo states.
+- You are about to review a repo whose own review skill still lives outside it.
+- You are about to approve through `gh pr review --approve`, or to merge.
+
+**Every one of these means: stop and re-read the rule it breaks.**

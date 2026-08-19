@@ -8,7 +8,7 @@ editing the live skill.
 
 ```
 gusskills/
-  pr-peer-review/SKILL.md
+  pr-peer-review/{SKILL.md,rationale.md}
   orchestrated-worktree-delivery/{SKILL.md,rationale.md}
   docs/superpowers/{specs,plans}/
 ```
