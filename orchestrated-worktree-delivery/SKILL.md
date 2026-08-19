@@ -92,9 +92,11 @@ orchestrator, removed once the comment is posted. Do not delegate it:
 `fatal: '<branch>' is already used by worktree at '<path>'`. **Not the implementer's**: the fix
 round reuses it.
 
-**Brief the reviewer that the tree is already at the head and no checkout is needed** — otherwise
-`pr-peer-review` runs `gh pr checkout <n>`, which inside the review worktree hits the `already
-used by worktree` fatal above. **The comment body is written outside the worktree, under
+**Brief the reviewer that the tree is already at the head and no checkout is needed.**
+`pr-peer-review` reaches the same conclusion on its own, comparing `git rev-parse HEAD` against
+the PR's `headRefOid` and skipping the checkout when they match, so the brief confirms rather
+than prevents — state it anyway, so no reviewer re-derives it and reaches for `gh pr checkout`
+into the fatal above. **The comment body is written outside the worktree, under
 `$TMPDIR`** — a body file left inside makes the removal refuse
 (`contains modified or untracked files`), and `--force` is not an option this cycle allows.
 
