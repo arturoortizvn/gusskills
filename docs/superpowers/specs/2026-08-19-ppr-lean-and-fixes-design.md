@@ -192,12 +192,26 @@ What shipped: a single `pr-peer-review/SKILL.md` at 2263 words, no companion fil
 left untouched. All 30 invariants listed under *Verification* and all 83 directives catalogued by
 the imperative sweep are present in that one file.
 
-Of this document, what still binds: the invariant list, the four corrections as specified, the
+Of this document, what still binds: the invariant list, correction 1 as specified, the
 no-escape-clause decision on defects 3 and 4, and the imperative-sweep detection test — each
-describes a property the produced file must have, and it does. What is now historical only: the
-*Why* section's premise that roughly half the file is argument, *The split* section's division of
-material between two files, and the 1300-1500 size target together with its justification — they
-record what was approved before implementation measured the file and found that premise false.
+describes a property the produced file must have, and it does. Corrections 2 and 3/4 bind in
+substance but not in the wording above: implementation reworded correction 2 so the
+already-checked-out guard is decidable (`headRefOid` compared against `git rev-parse HEAD`), and
+reworded the defects 3/4 gate to add the `review` qualifier its first wording lacked. Where this
+document's phrasing of those two differs from `SKILL.md`, the shipped file is authoritative.
+
+Invariant 30's phrasing in the *Verification* list above is now narrower than the shipped gate:
+it exempts a skill by "names no repo," where the gate exempts by purpose — a skill not about
+reviewing that repo's pull requests, which includes one about running a repo locally — and it
+carries no remedy for a repo that has both its own review skill and an outside duplicate. The
+invariant's wording is superseded, not the gate wrong: a later audit should compare against
+`SKILL.md` itself rather than against invariant 30's older phrasing. Revising the invariant list
+to match is left to its own task.
+
+What is now historical only: the *Why* section's premise that roughly half the file is argument,
+*The split* section's division of material between two files, and the 1300-1500 size target
+together with its justification — they record what was approved before implementation measured
+the file and found that premise false.
 
 The cost: the lean-skill goal is abandoned for this file rather than pursued by cutting rules, and
 `pr-peer-review/SKILL.md` is now roughly 500 words larger than the 1707 it started at, entirely in
